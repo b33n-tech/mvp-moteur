@@ -1,69 +1,65 @@
 # fichier: app.py
 import streamlit as st
 
-# --- Base de ressources simplifiée ---
-RESOURCES = {
-    "crowdfunding": [
-        {"name": "Modèle campagne crowdfunding", "url": "https://exemple.com/campagne"},
-        {"name": "Plateformes adaptées", "url": "https://exemple.com/plateformes"},
-        {"name": "Checklist communication", "url": "https://exemple.com/checklist"}
-    ],
-    "validation marché": [
-        {"name": "Checklist MVP", "url": "https://exemple.com/mvp"},
-        {"name": "Plateforme test utilisateurs", "url": "https://exemple.com/test"},
-        {"name": "Mentor produit", "url": "https://exemple.com/mentor"}
-    ],
-    "compétences": [
-        {"name": "Formations en ligne", "url": "https://exemple.com/formations"},
-        {"name": "Bootcamp entrepreneuriat", "url": "https://exemple.com/bootcamp"},
-        {"name": "Réseau mentor", "url": "https://exemple.com/mentor-reseau"}
-    ],
-    "stratégie": [
-        {"name": "Template Business Plan", "url": "https://exemple.com/bp"},
-        {"name": "Guide Go-to-market", "url": "https://exemple.com/gotm"},
-        {"name": "Atelier stratégie", "url": "https://exemple.com/atelier"}
-    ]
-}
+st.title("🚀 Copilote Projet MVP - Boutons")
+st.markdown("Clique sur ton blocage puis sur ton stade pour recevoir des actions concrètes.")
 
-# --- Mapping mots-clés vers ressources ---
-KEYWORDS = {
-    "crowdfunding": "crowdfunding",
-    "financement": "crowdfunding",
-    "investisseur": "crowdfunding",
-    "mvp": "validation marché",
-    "prototype": "validation marché",
-    "test utilisateur": "validation marché",
-    "compétence": "compétences",
-    "formation": "compétences",
-    "stratégie": "stratégie",
-    "business plan": "stratégie",
-    "go to market": "stratégie"
-}
+# --- Base de ressources structurée ---
+RESOURCES = [
+    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Modèle campagne crowdfunding", "url": "https://exemple.com/campagne"},
+    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Plateformes adaptées", "url": "https://exemple.com/plateformes"},
+    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Checklist communication", "url": "https://exemple.com/checklist"},
 
-# --- Streamlit UI ---
-st.title("🚀 Copilote Projet MVP Smooth")
-st.markdown("Décris rapidement ta solution ou ton idée, et reçois des actions concrètes pour avancer.")
+    {"blocage": "Validation marché", "stade": "Prototype", "name": "Checklist MVP", "url": "https://exemple.com/mvp"},
+    {"blocage": "Validation marché", "stade": "Prototype", "name": "Plateforme test utilisateurs", "url": "https://exemple.com/test"},
+    {"blocage": "Validation marché", "stade": "Prototype", "name": "Mentor produit", "url": "https://exemple.com/mentor"},
 
-# Input libre
-user_input = st.text_area("Décris ta solution ou ton blocage (1-2 phrases)", height=100)
+    {"blocage": "Compétences", "stade": "Formation", "name": "Formations en ligne", "url": "https://exemple.com/formations"},
+    {"blocage": "Compétences", "stade": "Formation", "name": "Bootcamp entrepreneuriat", "url": "https://exemple.com/bootcamp"},
+    {"blocage": "Compétences", "stade": "Formation", "name": "Réseau mentor", "url": "https://exemple.com/mentor-reseau"},
 
-def detect_need(text):
-    text_lower = text.lower()
-    for keyword, category in KEYWORDS.items():
-        if keyword in text_lower:
-            return category
-    return None
+    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Template Business Plan", "url": "https://exemple.com/bp"},
+    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Guide Go-to-market", "url": "https://exemple.com/gotm"},
+    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Atelier stratégie", "url": "https://exemple.com/atelier"},
+]
 
-if user_input:
-    category = detect_need(user_input)
-    if category:
-        st.markdown(f"### 🔹 Actions recommandées pour : {category}")
-        actions = RESOURCES.get(category, [])
-        for action in actions:
-            st.markdown(f"- [{action['name']}]({action['url']})")
-    else:
-        st.markdown("⚠️ Désolé, je n'ai pas identifié de besoin précis. Essaie d'être plus concret (financement, MVP, stratégie, compétences…).")
+# --- Etape 1 : Choix du blocage ---
+if "blocage" not in st.session_state:
+    st.session_state.blocage = None
+if "stade" not in st.session_state:
+    st.session_state.stade = None
+
+def select_blocage(b):
+    st.session_state.blocage = b
+
+if not st.session_state.blocage:
+    st.markdown("### 🔹 Quel est ton blocage principal ?")
+    cols = st.columns(4)
+    for i, b in enumerate(["Financement", "Validation marché", "Compétences", "Stratégie"]):
+        if cols[i%4].button(b):
+            select_blocage(b)
+
+# --- Etape 2 : Choix du stade ---
+elif not st.session_state.stade:
+    st.markdown(f"### 🔹 Tu as choisi : {st.session_state.blocage}. Quel est ton stade / solution ?")
+    # Récupérer les stades possibles pour ce blocage
+    stades = list({r['stade'] for r in RESOURCES if r['blocage']==st.session_state.blocage})
+    cols = st.columns(len(stades))
+    for i, s in enumerate(stades):
+        if cols[i].button(s):
+            st.session_state.stade = s
+
+# --- Etape 3 : Affichage des ressources ---
+else:
+    st.markdown(f"### ✅ Actions recommandées pour : {st.session_state.blocage} → {st.session_state.stade}")
+    filtered = [r for r in RESOURCES if r['blocage']==st.session_state.blocage and r['stade']==st.session_state.stade]
+    for r in filtered:
+        st.markdown(f"- [{r['name']}]({r['url']})")
+
+    if st.button("🔄 Recommencer"):
+        st.session_state.blocage = None
+        st.session_state.stade = None
 
 # Footer
 st.markdown("---")
-st.markdown("MVP sans LLM – expérience ultra-rapide et directe")
+st.markdown("MVP sans LLM – expérience fluide en 2-3 clics")
