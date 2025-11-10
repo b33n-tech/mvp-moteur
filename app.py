@@ -1,65 +1,61 @@
 # fichier: app.py
 import streamlit as st
 
-st.title("🚀 Copilote Projet MVP - Boutons")
-st.markdown("Clique sur ton blocage puis sur ton stade pour recevoir des actions concrètes.")
+st.set_page_config(layout="wide")
+st.title("🚀 Copilote Projet MVP - Flow fluide")
+st.markdown("Clique simplement sur ce qui résonne avec ton projet, et le copilote ajuste les recommandations automatiquement.")
 
-# --- Base de ressources structurée ---
+# --- Base de ressources avec tags multi-axes ---
 RESOURCES = [
-    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Modèle campagne crowdfunding", "url": "https://exemple.com/campagne"},
-    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Plateformes adaptées", "url": "https://exemple.com/plateformes"},
-    {"blocage": "Financement", "stade": "Crowdfunding", "name": "Checklist communication", "url": "https://exemple.com/checklist"},
+    {"name": "Modèle campagne crowdfunding", "url": "https://exemple.com/campagne", "tags": ["financement", "crowdfunding"]},
+    {"name": "Plateformes adaptées", "url": "https://exemple.com/plateformes", "tags": ["financement", "crowdfunding"]},
+    {"name": "Checklist communication", "url": "https://exemple.com/checklist", "tags": ["financement", "crowdfunding"]},
 
-    {"blocage": "Validation marché", "stade": "Prototype", "name": "Checklist MVP", "url": "https://exemple.com/mvp"},
-    {"blocage": "Validation marché", "stade": "Prototype", "name": "Plateforme test utilisateurs", "url": "https://exemple.com/test"},
-    {"blocage": "Validation marché", "stade": "Prototype", "name": "Mentor produit", "url": "https://exemple.com/mentor"},
+    {"name": "Checklist MVP", "url": "https://exemple.com/mvp", "tags": ["validation marché", "prototype"]},
+    {"name": "Plateforme test utilisateurs", "url": "https://exemple.com/test", "tags": ["validation marché", "prototype"]},
+    {"name": "Mentor produit", "url": "https://exemple.com/mentor", "tags": ["validation marché", "prototype"]},
 
-    {"blocage": "Compétences", "stade": "Formation", "name": "Formations en ligne", "url": "https://exemple.com/formations"},
-    {"blocage": "Compétences", "stade": "Formation", "name": "Bootcamp entrepreneuriat", "url": "https://exemple.com/bootcamp"},
-    {"blocage": "Compétences", "stade": "Formation", "name": "Réseau mentor", "url": "https://exemple.com/mentor-reseau"},
+    {"name": "Formations en ligne", "url": "https://exemple.com/formations", "tags": ["compétences", "formation"]},
+    {"name": "Bootcamp entrepreneuriat", "url": "https://exemple.com/bootcamp", "tags": ["compétences", "formation"]},
+    {"name": "Réseau mentor", "url": "https://exemple.com/mentor-reseau", "tags": ["compétences", "formation"]},
 
-    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Template Business Plan", "url": "https://exemple.com/bp"},
-    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Guide Go-to-market", "url": "https://exemple.com/gotm"},
-    {"blocage": "Stratégie", "stade": "Business Plan", "name": "Atelier stratégie", "url": "https://exemple.com/atelier"},
+    {"name": "Template Business Plan", "url": "https://exemple.com/bp", "tags": ["stratégie", "business plan"]},
+    {"name": "Guide Go-to-market", "url": "https://exemple.com/gotm", "tags": ["stratégie", "business plan"]},
+    {"name": "Atelier stratégie", "url": "https://exemple.com/atelier", "tags": ["stratégie", "business plan"]},
 ]
 
-# --- Etape 1 : Choix du blocage ---
-if "blocage" not in st.session_state:
-    st.session_state.blocage = None
-if "stade" not in st.session_state:
-    st.session_state.stade = None
+# --- Etapes fluides ---
+if "selected_tags" not in st.session_state:
+    st.session_state.selected_tags = []
 
-def select_blocage(b):
-    st.session_state.blocage = b
+st.markdown("### 🔹 Sélectionne ce qui correspond le mieux à ton projet")
 
-if not st.session_state.blocage:
-    st.markdown("### 🔹 Quel est ton blocage principal ?")
-    cols = st.columns(4)
-    for i, b in enumerate(["Financement", "Validation marché", "Compétences", "Stratégie"]):
-        if cols[i%4].button(b):
-            select_blocage(b)
+# Afficher les options sous forme de cartes interactives (boutons)
+all_tags = sorted({tag for r in RESOURCES for tag in r["tags"]})
+cols = st.columns(4)
+for i, tag in enumerate(all_tags):
+    if cols[i % 4].button(tag):
+        if tag not in st.session_state.selected_tags:
+            st.session_state.selected_tags.append(tag)
 
-# --- Etape 2 : Choix du stade ---
-elif not st.session_state.stade:
-    st.markdown(f"### 🔹 Tu as choisi : {st.session_state.blocage}. Quel est ton stade / solution ?")
-    # Récupérer les stades possibles pour ce blocage
-    stades = list({r['stade'] for r in RESOURCES if r['blocage']==st.session_state.blocage})
-    cols = st.columns(len(stades))
-    for i, s in enumerate(stades):
-        if cols[i].button(s):
-            st.session_state.stade = s
+# Afficher les tags sélectionnés
+if st.session_state.selected_tags:
+    st.markdown(f"**Sélections actuelles :** {', '.join(st.session_state.selected_tags)}")
 
-# --- Etape 3 : Affichage des ressources ---
-else:
-    st.markdown(f"### ✅ Actions recommandées pour : {st.session_state.blocage} → {st.session_state.stade}")
-    filtered = [r for r in RESOURCES if r['blocage']==st.session_state.blocage and r['stade']==st.session_state.stade]
+# --- Filtrer ressources automatiquement selon tags sélectionnés ---
+if st.session_state.selected_tags:
+    filtered = []
+    for r in RESOURCES:
+        if any(tag in r["tags"] for tag in st.session_state.selected_tags):
+            filtered.append(r)
+
+    st.markdown("### ✅ Actions recommandées")
     for r in filtered:
         st.markdown(f"- [{r['name']}]({r['url']})")
 
-    if st.button("🔄 Recommencer"):
-        st.session_state.blocage = None
-        st.session_state.stade = None
+# Bouton pour recommencer
+if st.button("🔄 Recommencer"):
+    st.session_state.selected_tags = []
 
-# Footer
 st.markdown("---")
-st.markdown("MVP sans LLM – expérience fluide en 2-3 clics")
+st.markdown("MVP fluide – le copilote s’adapte à ton flux de pensée")
